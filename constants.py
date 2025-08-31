@@ -12,6 +12,7 @@ DARK_GREEN = (0, 150, 0) # Un verde más oscuro para la cabeza
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 LIGHT_GRAY = (200, 200, 200) # Color para las líneas de la cuadrícula
+LIGHT_SILVER = (230, 230, 230) # Un color de fondo suave
 
 # Estados del juego
 GAME_STATE_MENU = 0

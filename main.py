@@ -1,5 +1,5 @@
 import pygame
-from constants import WINDOW_WIDTH, WINDOW_HEIGHT, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, BLACK, WHITE, RED, GAME_STATE_MENU, GAME_STATE_PLAYING, GAME_STATE_GAME_OVER, GAME_STATE_PAUSED
+from constants import WINDOW_WIDTH, WINDOW_HEIGHT, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, BLACK, WHITE, RED, GAME_STATE_MENU, GAME_STATE_PLAYING, GAME_STATE_GAME_OVER, GAME_STATE_PAUSED, LIGHT_SILVER
 from utils import display_text
 from game import SnakeGame
 
@@ -9,6 +9,12 @@ def main():
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Juego de la Serpiente")
     clock = pygame.time.Clock()
+
+    # Crear una superficie para el área de juego
+    game_surface = pygame.Surface((GAME_AREA_WIDTH, GAME_AREA_HEIGHT))
+    game_area_x = (WINDOW_WIDTH - GAME_AREA_WIDTH) // 2
+    game_area_y = (WINDOW_HEIGHT - GAME_AREA_HEIGHT) // 2
+    border_width = 5 # Aumentar el grosor del borde
 
     game = SnakeGame() # Instancia del juego
     game_state = GAME_STATE_MENU # Empezar en el estado de menú
@@ -75,7 +81,7 @@ def main():
                     elif event.key == pygame.K_q: # Salir
                         running = False
 
-        screen.fill(WHITE) # Rellenar el fondo para todos los estados
+        screen.fill(LIGHT_SILVER) # Rellenar el fondo para todos los estados
 
         if game_state == GAME_STATE_MENU:
             display_text(screen, "Juego de la Serpiente", 50, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 100, BLACK)
@@ -83,34 +89,39 @@ def main():
                 color = RED if i == selected_option_index else BLACK
                 display_text(screen, option, 35, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 30 + i * 40, color)
             display_text(screen, "Presiona ENTER o haz click para iniciar", 25, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 100, BLACK)
-        elif game_state == GAME_STATE_PLAYING:
-            # Actualizar y dibujar el juego
-            if not game.update(): # Si update devuelve False, es Game Over
-                game_state = GAME_STATE_GAME_OVER
-            game.draw(screen)
+        elif game_state == GAME_STATE_PLAYING or game_state == GAME_STATE_PAUSED or game_state == GAME_STATE_GAME_OVER:
+            # Dibujar el borde del área de juego
+            pygame.draw.rect(screen, BLACK, 
+                             (game_area_x - border_width, game_area_y - border_width,
+                              GAME_AREA_WIDTH + border_width * 2, GAME_AREA_HEIGHT + border_width * 2), border_width)
+
+            # Actualizar y dibujar el juego en su propia superficie
+            if game_state == GAME_STATE_PLAYING:
+                if not game.update(): # Si update devuelve False, es Game Over
+                    game_state = GAME_STATE_GAME_OVER
+            
+            game.draw(game_surface)
+            screen.blit(game_surface, (game_area_x, game_area_y))
 
             # Mostrar puntuación en el área de UI
-            display_text(screen, f"Puntuación: {game.score}", 25, GAME_AREA_WIDTH + (WINDOW_WIDTH - GAME_AREA_WIDTH) // 2, 50, BLACK)
+            display_text(screen, f"Puntuación: {game.score}", 25, WINDOW_WIDTH // 2, 50, BLACK)
 
-        elif game_state == GAME_STATE_PAUSED: # Dibujar el estado de pausa
-            # Dibujar el juego debajo
-            pygame.draw.rect(screen, BLACK, (0, 0, GAME_AREA_WIDTH, GAME_AREA_HEIGHT), 0) # Fondo del área de juego
-            game.draw(screen)
+            if game_state == GAME_STATE_PAUSED:
+                # Dibujar overlay de pausa
+                overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 150)) # Negro semi-transparente
+                screen.blit(overlay, (0, 0))
 
-            # Dibujar overlay de pausa
-            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 150)) # Negro semi-transparente
-            screen.blit(overlay, (0, 0))
+                display_text(screen, "PAUSA", 50, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 80, WHITE)
+                for i, option in enumerate(pause_menu_options):
+                    color = RED if i == selected_pause_option_index else WHITE
+                    display_text(screen, option, 35, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20 + i * 40, color)
 
-            display_text(screen, "PAUSA", 50, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 80, WHITE)
-            for i, option in enumerate(pause_menu_options):
-                color = RED if i == selected_pause_option_index else WHITE
-                display_text(screen, option, 35, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20 + i * 40, color)
+            if game_state == GAME_STATE_GAME_OVER:
+                display_text(screen, "GAME OVER", 50, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50, RED)
+                display_text(screen, f"Puntuación final: {game.score}", 30, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, BLACK)
+                display_text(screen, "Presiona R para reiniciar o Q para salir", 25, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 50, BLACK)
 
-        elif game_state == GAME_STATE_GAME_OVER:
-            display_text(screen, "GAME OVER", 50, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50, RED)
-            display_text(screen, f"Puntuación final: {game.score}", 30, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, BLACK)
-            display_text(screen, "Presiona R para reiniciar o Q para salir", 25, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 50, BLACK)
 
         pygame.display.flip() # Actualizar la pantalla
 
