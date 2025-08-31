@@ -1,9 +1,9 @@
 # constants.py
 
 # --- Constantes del juego ---
-WIDTH, HEIGHT = 400, 400
+WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600 # Tamaño de la ventana
+GAME_AREA_WIDTH, GAME_AREA_HEIGHT = 400, 400 # Área de juego
 GRID_SIZE = 20
-SNAKE_SPEED = 7
 
 # Colores
 WHITE = (255, 255, 255)
@@ -17,3 +17,14 @@ LIGHT_GRAY = (200, 200, 200) # Color para las líneas de la cuadrícula
 GAME_STATE_MENU = 0
 GAME_STATE_PLAYING = 1
 GAME_STATE_GAME_OVER = 2
+GAME_STATE_PAUSED = 3
+
+# Dificultades
+DIFFICULTY_EASY = 0
+DIFFICULTY_MEDIUM = 1
+DIFFICULTY_HARD = 2
+
+# Tipos de comida
+FOOD_TYPE_REGULAR = 'regular'
+FOOD_TYPE_POISON = 'poison'
+POISON_FOOD_PROBABILITY = 0.1 # 10% de probabilidad de que la fruta sea venenosa
