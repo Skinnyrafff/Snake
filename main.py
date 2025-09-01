@@ -1,6 +1,6 @@
 import pygame
 import pygame_menu
-from constants import WINDOW_WIDTH, WINDOW_HEIGHT, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, BLACK, WHITE, RED, LIGHT_SILVER, INITIAL_MUSIC_VOLUME, INITIAL_SFX_VOLUME
+from constants import WINDOW_WIDTH, WINDOW_HEIGHT, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, BLACK, WHITE, RED, LIGHT_SILVER, INITIAL_MUSIC_VOLUME, INITIAL_SFX_VOLUME, TOTAL_CELLS
 from utils import display_text
 from game import SnakeGame
 
@@ -44,6 +44,7 @@ def main():
         game.reset_game(game.current_difficulty_str)
         game_running = True
         game_over_menu.disable()
+        game_won_menu.disable()
         pygame.mixer.music.set_volume(INITIAL_MUSIC_VOLUME) # Reset music volume on restart
 
     def choose_level_callback():
@@ -51,12 +52,14 @@ def main():
         game_running = False # Exit game loop
         menu.enable()
         game_over_menu.disable()
+        game_won_menu.disable()
         pygame.mixer.music.set_volume(INITIAL_MUSIC_VOLUME) # Reset music volume on choosing level
 
     def exit_game_callback():
         nonlocal running
         running = False
         game_over_menu.disable()
+        game_won_menu.disable()
 
     def set_music_volume(value, **kwargs):
         pygame.mixer.music.set_volume(value / 100.0)
@@ -84,10 +87,18 @@ def main():
     game_over_menu = pygame_menu.Menu('GAME OVER', WINDOW_WIDTH, WINDOW_HEIGHT,
                                       theme=pygame_menu.themes.THEME_BLUE)
     
-    score_label = game_over_menu.add.label(f'Puntuación final: {game_over_score}', font_size=30, font_color=BLACK, background_color=None)
+    score_label_game_over = game_over_menu.add.label(f'Puntuación final: {game_over_score}', font_size=30, font_color=BLACK, background_color=None)
     game_over_menu.add.button('Reiniciar', restart_game_callback)
     game_over_menu.add.button('Elegir Nivel', choose_level_callback)
     game_over_menu.add.button('Salir', exit_game_callback)
+
+    # Game Won Menu
+    game_won_menu = pygame_menu.Menu('¡HAS GANADO!', WINDOW_WIDTH, WINDOW_HEIGHT,
+                                     theme=pygame_menu.themes.THEME_BLUE)
+    score_label_game_won = game_won_menu.add.label(f'Puntuación final: {game_over_score}', font_size=30, font_color=BLACK, background_color=None)
+    game_won_menu.add.button('Reiniciar', restart_game_callback)
+    game_won_menu.add.button('Elegir Nivel', choose_level_callback)
+    game_won_menu.add.button('Salir', exit_game_callback)
 
     game_surface = pygame.Surface((GAME_AREA_WIDTH, GAME_AREA_HEIGHT))
     game_area_x = (WINDOW_WIDTH - GAME_AREA_WIDTH) // 2
@@ -131,13 +142,21 @@ def main():
                                      (game_area_x - border_width, game_area_y - border_width,
                                       GAME_AREA_WIDTH + border_width * 2, GAME_AREA_HEIGHT + border_width * 2), border_width)
 
-                if not game.update(): # If update returns False, it's Game Over
+                game_status = game.update() # Get game status
+                if game_status == False: # Game Over (Loss)
                     game_running = False # Exit game loop
                     game_over_score = game.score # Store final score
-                    score_label.set_title(f'Puntuación final: {game_over_score}') # Update score in menu
+                    score_label_game_over.set_title(f'Puntuación final: {game_over_score}') # Update score in menu
                     game_over_menu.enable() # Enable game over menu
                     game_over_sound.play() # Play game over sound
                     pygame.time.wait(2000) # Delay for game over sound
+                elif game_status == "win": # Game Over (Win)
+                    game_running = False # Exit game loop
+                    game_over_score = game.score # Store final score
+                    score_label_game_won.set_title(f'Puntuación final: {game_over_score}') # Update score in menu
+                    game_won_menu.enable() # Enable game won menu
+                    # No sound for win yet, can add later
+                    pygame.time.wait(2000) # Delay for win screen
                     
                 game.draw(game_surface)
                 screen.blit(game_surface, (game_area_x, game_area_y))
@@ -153,6 +172,14 @@ def main():
                 game_over_menu.mainloop(screen)
             except Exception as e:
                 print(f"Error in game_over_menu.mainloop: {e}")
+                running = False # Exit the main loop to prevent further crashes
+
+        # Game Won Menu Loop
+        if game_won_menu.is_enabled():
+            try:
+                game_won_menu.mainloop(screen)
+            except Exception as e:
+                print(f"Error in game_won_menu.mainloop: {e}")
                 running = False # Exit the main loop to prevent further crashes
 
     pygame.quit()
