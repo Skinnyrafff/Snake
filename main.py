@@ -1,7 +1,7 @@
 import pygame
 import pygame_menu
 from constants import WINDOW_WIDTH, WINDOW_HEIGHT, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, BLACK, WHITE, RED, LIGHT_SILVER, INITIAL_MUSIC_VOLUME, INITIAL_SFX_VOLUME, TOTAL_CELLS
-from utils import display_text
+from utils import display_text, load_unlocked_difficulty, save_unlocked_difficulty
 from game import SnakeGame
 
 def main():
@@ -32,6 +32,22 @@ def main():
     game_running = False
     game_over_score = 0
 
+    # Difficulty unlocking
+    unlocked_difficulty = load_unlocked_difficulty()
+    difficulty_levels = ["Fácil", "Medio", "Difícil"]
+
+    def update_menu_buttons():
+        # Get current unlocked level index
+        unlocked_index = difficulty_levels.index(unlocked_difficulty)
+
+        # Enable/disable buttons based on unlocked level
+        for i, level in enumerate(difficulty_levels):
+            button = menu.get_widget(level) # Get button by its title (which is the level name)
+            if i <= unlocked_index:
+                button.enable()
+            else:
+                button.disable()
+
     def start_the_game(difficulty):
         nonlocal game_running
         game.reset_game(difficulty)
@@ -53,6 +69,7 @@ def main():
         menu.enable()
         game_over_menu.disable()
         game_won_menu.disable()
+        update_menu_buttons() # Update button states when returning to menu
         pygame.mixer.music.set_volume(INITIAL_MUSIC_VOLUME) # Reset music volume on choosing level
 
     def exit_game_callback():
@@ -76,12 +93,15 @@ def main():
                            theme=pygame_menu.themes.THEME_BLUE)
 
     
-    menu.add.button('Fácil', lambda: start_the_game('Fácil'))
-    menu.add.button('Medio', lambda: start_the_game('Medio'))
-    menu.add.button('Difícil', lambda: start_the_game('Difícil'))
+    menu.add.button('Fácil', lambda: start_the_game('Fácil'), _id='Fácil')
+    menu.add.button('Medio', lambda: start_the_game('Medio'), _id='Medio')
+    menu.add.button('Difícil', lambda: start_the_game('Difícil'), _id='Difícil')
     menu.add.range_slider('Música', default=int(INITIAL_MUSIC_VOLUME * 100), range_values=(0, 100), increment=1, onchange=set_music_volume, value_format=format_int_value)
     menu.add.range_slider('Efectos', default=int(INITIAL_SFX_VOLUME * 100), range_values=(0, 100), increment=1, onchange=set_sfx_volume, value_format=format_int_value)
     menu.add.button('Salir', pygame_menu.events.EXIT)
+
+    # Initial update of menu buttons
+    update_menu_buttons()
 
     # Game Over Menu
     game_over_menu = pygame_menu.Menu('GAME OVER', WINDOW_WIDTH, WINDOW_HEIGHT,

@@ -6,6 +6,25 @@ from constants import GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GRID_SIZE, FOOD_TYPE_RE
 # Cache for fonts
 _font_cache = {}
 
+# File for unlocked difficulties
+UNLOCKED_LEVELS_FILE = "unlocked_levels.txt"
+
+def load_unlocked_difficulty():
+    """Carga la dificultad más alta desbloqueada."""
+    try:
+        with open(UNLOCKED_LEVELS_FILE, "r") as f:
+            difficulty = f.readline().strip()
+            if difficulty in ["Fácil", "Medio", "Difícil"]:
+                return difficulty
+    except FileNotFoundError:
+        pass
+    return "Fácil" # Default to Fácil if file not found or invalid
+
+def save_unlocked_difficulty(difficulty):
+    """Guarda la dificultad más alta desbloqueada."""
+    with open(UNLOCKED_LEVELS_FILE, "w") as f:
+        f.write(difficulty)
+
 def place_food():
     """Coloca una fruta en una posición aleatoria del mapa."""
     x = random.randrange(0, GAME_AREA_WIDTH // GRID_SIZE) * GRID_SIZE
