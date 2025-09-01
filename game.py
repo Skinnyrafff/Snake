@@ -1,14 +1,16 @@
 import pygame
-from constants import GRID_SIZE, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GREEN, DARK_GREEN, RED, LIGHT_GRAY, BLACK, WHITE
+from constants import GRID_SIZE, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GREEN, DARK_GREEN, RED, LIGHT_GRAY, BLACK, WHITE, MAX_MUSIC_VOLUME, MUSIC_VOLUME_INCREMENT_PER_FRUIT, INITIAL_SFX_VOLUME
 from utils import place_food, display_text
 
 class SnakeGame:
-    def __init__(self):
+    def __init__(self, eat_sound):
         self.snake_pos = []
         self.snake_direction = ''
         self.food_positions = []
         self.score = 0
         self.current_difficulty_str = "Fácil"
+        self.eat_sound = eat_sound # Store eat sound
+        self.initial_eat_sound_volume = INITIAL_SFX_VOLUME # Store initial SFX volume
         self.reset_game(self.current_difficulty_str)
 
     def _generate_initial_food(self, num_food_items):
@@ -21,15 +23,16 @@ class SnakeGame:
         self.snake_direction = 'RIGHT'
         self.score = 0
         self.current_difficulty_str = difficulty_str
+        self.eat_sound.set_volume(self.initial_eat_sound_volume) # Reset eat sound volume
 
         if difficulty_str == "Fácil":
-            self.current_speed = 7
+            self.current_speed = 6
             self._generate_initial_food(3)
         elif difficulty_str == "Medio":
-            self.current_speed = 10
+            self.current_speed = 8
             self._generate_initial_food(3)
         elif difficulty_str == "Difícil":
-            self.current_speed = 12
+            self.current_speed = 10
             self._generate_initial_food(1)
 
     def update(self):
@@ -73,6 +76,13 @@ class SnakeGame:
                 return False
             else:
                 self.score += 1
+                self.eat_sound.play() # Play eat sound
+                
+                # Increase eat sound volume
+                current_eat_sound_volume = self.eat_sound.get_volume()
+                new_eat_sound_volume = min(MAX_MUSIC_VOLUME, current_eat_sound_volume + MUSIC_VOLUME_INCREMENT_PER_FRUIT)
+                self.eat_sound.set_volume(new_eat_sound_volume)
+
                 self.food_positions.pop(food_eaten_index)
                 self.food_positions.append(place_food())
         else:
